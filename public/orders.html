@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Upcoming orders — PlenCoin</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>◎</text></svg>" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <a class="back" href="/">← Portfolio</a>
+        <h1>Upcoming orders</h1>
+        <span class="badge" id="mode-badge" hidden>mock data</span>
+      </div>
+      <div class="topbar-actions">
+        <label class="toggle">
+          <input type="checkbox" id="auto-refresh" checked />
+          Auto-refresh
+        </label>
+        <div class="stepper">
+          <button type="button" id="interval-down" aria-label="Shorter refresh interval">−</button>
+          <input type="number" id="interval" value="15" min="5" max="600" step="5"
+                 aria-label="Refresh interval in seconds" />
+          <span class="stepper-unit">s</span>
+          <button type="button" id="interval-up" aria-label="Longer refresh interval">+</button>
+        </div>
+        <span class="updated" id="updated"></span>
+        <button type="button" id="refresh" class="button">Refresh</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary" aria-label="Order summary">
+        <div class="stat">
+          <span class="label">Open orders</span>
+          <span class="value" id="total-count">—</span>
+          <span class="note" id="asset-note"></span>
+        </div>
+        <div class="stat">
+          <span class="label">Buys</span>
+          <span class="value" id="buy-count">—</span>
+          <span class="note" id="buy-notional"></span>
+        </div>
+        <div class="stat">
+          <span class="label">Sells</span>
+          <span class="value" id="sell-count">—</span>
+          <span class="note" id="sell-notional"></span>
+        </div>
+        <div class="stat">
+          <span class="label">Nearest</span>
+          <span class="value" id="nearest">—</span>
+          <span class="note" id="nearest-note"></span>
+        </div>
+      </section>
+
+      <div id="banner" class="banner" hidden></div>
+
+      <div class="filters" id="filters" role="group" aria-label="Filter by coin"></div>
+
+      <p class="explainer">
+        Sorted by how far the price has to move to reach each order, nearest first.
+        A buy needs the price to fall, a sell needs it to rise.
+      </p>
+
+      <div class="books">
+        <section class="panel book" aria-label="Buy orders">
+          <div class="panel-head">
+            <h2><span class="side-dot buy" aria-hidden="true"></span> Buys</h2>
+            <span class="sub" id="buy-summary"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col" class="num sr">#</th>
+                  <th scope="col">Asset</th>
+                  <th scope="col" class="num">Move</th>
+                  <th scope="col" class="num">Limit</th>
+                  <th scope="col" class="num">Size</th>
+                  <th scope="col" class="num">Value</th>
+                  <th scope="col" class="num">Running</th>
+                </tr>
+              </thead>
+              <tbody id="buy-body">
+                <tr class="empty"><td colspan="7">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel book" aria-label="Sell orders">
+          <div class="panel-head">
+            <h2><span class="side-dot sell" aria-hidden="true"></span> Sells</h2>
+            <span class="sub" id="sell-summary"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col" class="num sr">#</th>
+                  <th scope="col">Asset</th>
+                  <th scope="col" class="num">Move</th>
+                  <th scope="col" class="num">Limit</th>
+                  <th scope="col" class="num">Size</th>
+                  <th scope="col" class="num">Value</th>
+                  <th scope="col" class="num">Running</th>
+                </tr>
+              </thead>
+              <tbody id="sell-body">
+                <tr class="empty"><td colspan="7">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      Read-only. Nothing here places, edits or cancels a Coinbase order.
+    </footer>
+
+    <script type="module" src="/orders.js"></script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "plencoin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local dashboard that reads a Coinbase portfolio and displays it.",
+  "type": "module",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "mock": "node server.js --mock",
+    "check": "node scripts/check-credentials.js"
+  }
+}

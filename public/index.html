@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PlenCoin</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>◎</text></svg>" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="mark" aria-hidden="true">◎</span>
+        <h1>PlenCoin</h1>
+        <span class="badge" id="mode-badge" hidden>mock data</span>
+      </div>
+      <div class="topbar-actions">
+        <a class="nav-link" href="/orders.html">Upcoming orders</a>
+        <span class="updated" id="updated"></span>
+        <button type="button" id="refresh" class="button">Refresh</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary" aria-label="Portfolio summary">
+        <div class="stat">
+          <span class="label">Total</span>
+          <span class="value" id="total-value">—</span>
+          <span class="delta" id="total-change"></span>
+        </div>
+        <div class="stat">
+          <span class="label">Assets</span>
+          <span class="value" id="asset-count">—</span>
+          <span class="note" id="account-note"></span>
+        </div>
+        <div class="stat" id="staked-stat" hidden>
+          <span class="label">Staked</span>
+          <span class="value" id="staked-value">—</span>
+          <span class="note" id="staked-note"></span>
+        </div>
+        <div class="stat">
+          <span class="label">Largest</span>
+          <span class="value" id="top-asset">—</span>
+          <span class="note" id="top-asset-note"></span>
+        </div>
+      </section>
+
+      <div id="banner" class="banner" hidden></div>
+
+
+      <section class="panel" aria-label="Holdings">
+        <div class="panel-head">
+          <h2>Holdings</h2>
+          <label class="toggle">
+            <input type="checkbox" id="hide-dust" checked />
+            Hide dust (&lt; $0.01)
+          </label>
+        </div>
+        <div class="table-wrap">
+          <table id="holdings">
+            <thead>
+              <tr id="holdings-head">
+                <th scope="col" class="sortable" aria-sort="none"><button type="button" data-key="currency">Asset<span class="caret" aria-hidden="true"></span></button></th>
+                <th scope="col" class="sortable num" aria-sort="none"><button type="button" data-key="value">Value<span class="caret" aria-hidden="true"></span></button></th>
+                <th scope="col" class="sortable num" aria-sort="none"><button type="button" data-key="amount">Quantity<span class="caret" aria-hidden="true"></span></button></th>
+                <th scope="col" class="sortable num" aria-sort="none"><button type="button" data-key="price">Price<span class="caret" aria-hidden="true"></span></button></th>
+                <th scope="col" class="sortable num" aria-sort="none"><button type="button" data-key="change24hPercent">24h<span class="caret" aria-hidden="true"></span></button></th>
+                <th scope="col" class="sortable num" aria-sort="none"><button type="button" data-key="allocation">Allocation<span class="caret" aria-hidden="true"></span></button></th>
+              </tr>
+            </thead>
+            <tbody id="holdings-body">
+              <tr class="empty"><td colspan="6">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Allocation">
+        <h2>Allocation</h2>
+        <div class="allocation">
+          <svg id="donut" viewBox="0 0 200 200" role="img" aria-labelledby="donut-title">
+            <title id="donut-title">Portfolio allocation by asset</title>
+          </svg>
+          <ul class="legend" id="legend"></ul>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Read-only view of your Coinbase accounts. Prices from the Coinbase Advanced Trade API.
+    </footer>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

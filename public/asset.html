@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sell planner — PlenCoin</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>◎</text></svg>" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <a class="back" href="/">← Portfolio</a>
+        <h1 id="title">Sell planner</h1>
+        <span class="badge" id="mode-badge" hidden>mock data</span>
+      </div>
+      <div class="topbar-actions">
+        <a class="nav-link" href="/orders.html">Upcoming orders</a>
+        <span class="updated" id="updated"></span>
+        <button type="button" id="refresh" class="button">Refresh</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary" aria-label="Asset summary">
+        <div class="stat">
+          <span class="label">Lifetime P/L</span>
+          <span class="value" id="lifetime-pl">—</span>
+          <span class="note" id="lifetime-note"></span>
+        </div>
+        <div class="stat">
+          <span class="label">Realized</span>
+          <span class="value" id="realized-pl">—</span>
+          <span class="note">past sells</span>
+        </div>
+        <div class="stat">
+          <span class="label">Unrealized</span>
+          <span class="value" id="unrealized-pl">—</span>
+          <span class="note" id="unrealized-note"></span>
+        </div>
+        <div class="stat">
+          <span class="label">Held</span>
+          <span class="value" id="held-qty">—</span>
+          <span class="note" id="held-note"></span>
+        </div>
+        <div class="stat">
+          <span class="label">Long-term</span>
+          <span class="value" id="longterm-qty">—</span>
+          <span class="note" id="longterm-note"></span>
+        </div>
+        <div class="stat">
+          <span class="label">Avg entry</span>
+          <span class="value" id="avg-entry">—</span>
+          <span class="note" id="spot-note"></span>
+        </div>
+      </section>
+
+      <div id="banner" class="banner" hidden></div>
+
+      <section class="panel" aria-label="Sell ladder">
+        <div class="panel-head">
+          <h2>Sell ladder</h2>
+          <div class="ladder-controls">
+            <label class="toggle">
+              Fee rate
+              <input type="number" id="fee-rate" step="0.01" min="0" max="5" value="0" />
+              %
+            </label>
+            <span class="sub" id="ladder-summary"></span>
+          </div>
+        </div>
+
+        <p class="explainer" id="explainer"></p>
+
+        <div class="legend-row">
+          <span><span class="signal act">hold Nd</span> short-term gain, long-term in N days</span>
+          <span><span class="signal good">LT gain</span> already long-term</span>
+          <span><span class="signal warn">ST gain</span> crossover still far off</span>
+          <span><span class="signal good">ST loss</span> loss booked short-term</span>
+          <span><span class="signal act">sell by Nd</span> short-term loss, crossing to long-term in N days</span>
+          <span><span class="signal warn">LT loss</span> loss booked long-term</span>
+        </div>
+
+        <div class="table-wrap">
+          <table id="ladder">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col" class="num">Size</th>
+                <th scope="col" class="num">Limit</th>
+                <th scope="col" class="num">vs spot</th>
+                <th scope="col" class="num">Proceeds</th>
+                <th scope="col" class="num">Remaining</th>
+                <th scope="col" class="num">Age</th>
+                <th scope="col" class="num">Books</th>
+                <th scope="col">Term</th>
+                <th scope="col" class="num">Lifetime P/L</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="ladder-body">
+              <tr class="empty"><td colspan="11">Loading…</td></tr>
+            </tbody>
+            <tfoot id="ladder-foot"></tfoot>
+          </table>
+        </div>
+
+        <form class="whatif" id="whatif-form">
+          <span class="label">Add a what-if sell</span>
+          <label>
+            <span class="visually-hidden">Size</span>
+            <input type="number" id="whatif-size" step="any" min="0" placeholder="size" required />
+          </label>
+          <label>
+            <span class="visually-hidden">Limit price</span>
+            <input type="number" id="whatif-price" step="any" min="0" placeholder="limit price" required />
+          </label>
+          <button type="submit" class="button">Add</button>
+          <button type="button" class="button" id="clear-whatif">Clear what-ifs</button>
+        </form>
+      </section>
+    </main>
+
+    <footer>
+      Read-only planning. Nothing here places, edits or cancels a Coinbase order.
+    </footer>
+
+    <script type="module" src="/asset.js"></script>
+  </body>
+</html>

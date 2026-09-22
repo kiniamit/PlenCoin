@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PlenCoin</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>◎</text></svg>" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="centered">
+    <main class="gate">
+      <div class="panel">
+        <div class="brand">
+          <span class="mark" aria-hidden="true">◎</span>
+          <h1>PlenCoin</h1>
+        </div>
+        <p class="note">Enter the passphrase to view this portfolio.</p>
+
+        <form id="gate-form" autocomplete="on">
+          <label class="visually-hidden" for="passphrase">Passphrase</label>
+          <input type="password" id="passphrase" name="password" autocomplete="current-password"
+                 placeholder="Passphrase" required autofocus />
+          <button type="submit" class="button" id="submit">Unlock</button>
+        </form>
+
+        <p class="gate-error" id="error" hidden></p>
+      </div>
+    </main>
+    <script type="module" src="/login.js"></script>
+  </body>
+</html>
