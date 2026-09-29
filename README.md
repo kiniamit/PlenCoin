@@ -74,17 +74,12 @@ Either way the server listens on the Windows side, so open
 
 ## Features
 
-- **Portfolio dashboard** (`/`) — total value, 24h change, allocation, sortable
-  holdings table. Staked funds included.
-- **Sell planner** (`/asset.html?symbol=TRB`, or click any asset row) — lifetime
-  P/L rebuilt from your full trade history, and what it becomes after each sell
-  order fills. See [docs/sell-planner.md](docs/sell-planner.md).
-- **Upcoming orders** (`/orders.html`) — every resting buy and sell across all
-  coins, sorted by how far the price must move to reach them. See
-  [docs/upcoming-orders.md](docs/upcoming-orders.md).
-- **Holding-period signals** — draft v1, on the sell planner: whether each sell
-  order books a short- or long-term gain or loss, and which are worth waiting
-  out. See [docs/trade-timing.md](docs/trade-timing.md).
+| Page | What it does |
+| --- | --- |
+| `/` | Portfolio dashboard — total value, 24h change, sortable holdings, allocation. Staked funds included. |
+| `/orders.html` | [Upcoming orders](docs/upcoming-orders.md) — every resting buy and sell, ranked by how far the price must move. |
+| `/asset.html?symbol=X` | [Sell planner](docs/sell-planner.md) — lifetime P/L rebuilt from your full ledger, projected across the sell ladder. |
+| `/signals.html` | [Holding-period signals](docs/trade-timing.md) — orders whose tax treatment changes on a date. Scanned on startup and hourly. |
 
 ## How it works
 
@@ -94,6 +89,7 @@ src/coinbase.js      CDP JWT signing (ES256 / EdDSA) and the API calls
 src/portfolio.js     groups positions by asset, prices them, computes totals
 src/asset.js         per-asset detail: cost basis, lifetime P/L, open orders
 src/orders.js        every open order, ranked by distance from spot
+src/signals.js       background sweep for holding-period deadlines
 src/pnl.js           HIFO lot matching and the sell-ladder projection
 src/mock.js          sample payloads for MOCK=1
 public/              index.html (dashboard), asset.html (planner), orders.html (order book)
@@ -148,6 +144,7 @@ Responses are cached for 15s (`CACHE_MS`); the page auto-refreshes every 60s and
 | `SESSION_DAYS` | no | `30` | How long a sign-in lasts |
 | `CACHE_MS` | no | `15000` | Server-side cache window |
 | `ASSET_CACHE_MS` | no | `60000` | Cache window for per-asset detail |
+| `SCAN_INTERVAL_MS` | no | `3600000` | How often the signals sweep re-runs |
 
 Real environment variables always win over `.env`, so CI secrets need no extra
 wiring. In GitHub Actions:

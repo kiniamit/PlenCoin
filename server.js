@@ -9,6 +9,7 @@ import { getPortfolio } from './src/portfolio.js';
 import { getMockPortfolio } from './src/mock.js';
 import { getAssetDetail } from './src/asset.js';
 import { getUpcomingOrders } from './src/orders.js';
+import { readDigest, scanSignals, writeDigest } from './src/signals.js';
 import {
   clearFailures,
   clientKey,
@@ -19,7 +20,7 @@ import {
   passphraseMatches,
   recordFailure,
 } from './src/auth.js';
-import { getMockAsset, getMockOrders } from './src/mock.js';
+import { getMockAsset, getMockOrders, getMockSignals } from './src/mock.js';
 
 loadEnvFile();
 
@@ -98,6 +99,68 @@ async function serveAsset(res, symbol, { refresh }) {
 }
 
 let ordersCache = { at: 0, payload: null };
+
+const SCAN_INTERVAL_MS = Number.parseInt(process.env.SCAN_INTERVAL_MS ?? String(60 * 60_000), 10);
+let digest = null;
+let scanning = null;
+
+/**
+ * A sweep costs ~150 paginated calls, so only one runs at a time and callers
+ * share the in-flight promise rather than queueing another.
+ */
+function runScan(reason) {
+  if (scanning) return scanning;
+
+  scanning = (async () => {
+    const startedAt = Date.now();
+    console.log(`[signals] scan started (${reason})`);
+    try {
+      const result = await scanSignals();
+      digest = result;
+      await writeDigest(result);
+      console.log(
+        `[signals] ${result.signals.length} signal(s) across ${result.assetsScanned.length} assets ` +
+          `in ${Math.round((Date.now() - startedAt) / 1000)}s`,
+      );
+      return result;
+    } catch (error) {
+      console.error('[signals] scan failed:', error.message);
+      throw error;
+    } finally {
+      scanning = null;
+    }
+  })();
+
+  return scanning;
+}
+
+async function serveSignals(res, { rescan }) {
+  if (MOCK) return sendJson(res, 200, getMockSignals());
+
+  try {
+    if (rescan) {
+      return sendJson(res, 200, { ...(await runScan('manual')), scanning: false });
+    }
+
+    if (!digest) digest = await readDigest();
+    if (!digest) {
+      // Nothing on disk yet and the boot scan is still going.
+      runScan('on demand');
+      return sendJson(res, 200, {
+        generatedAt: null,
+        signals: [],
+        assetsScanned: [],
+        warnings: [],
+        scanning: true,
+      });
+    }
+
+    sendJson(res, 200, { ...digest, scanning: Boolean(scanning) });
+  } catch (error) {
+    console.error('[signals]', error.message);
+    sendJson(res, 500, { error: error.message });
+  }
+}
 
 async function serveOrders(res, { refresh }) {
   if (MOCK) return sendJson(res, 200, getMockOrders());
@@ -216,6 +279,10 @@ const server = http.createServer(async (req, res) => {
     return serveOrders(res, { refresh: url.searchParams.get('refresh') === '1' });
   }
 
+  if (url.pathname === '/api/signals') {
+    return serveSignals(res, { rescan: url.searchParams.get('rescan') === '1' });
+  }
+
   if (url.pathname === '/api/asset') {
     const symbol = url.searchParams.get('symbol');
     if (!symbol) return sendJson(res, 400, { error: 'Missing ?symbol=' });
@@ -248,6 +315,12 @@ server.listen(PORT, HOST, () => {
       `WARNING: listening on ${HOST} with no passphrase. Anyone on this network can read your ` +
         'portfolio. Set APP_PASSPHRASE in .env, or set HOST=127.0.0.1.',
     );
+  }
+
+  if (!MOCK && hasCredentials()) {
+    // Kick off in the background so the first page load is not blocked.
+    runScan('startup').catch(() => {});
+    setInterval(() => runScan('hourly').catch(() => {}), SCAN_INTERVAL_MS).unref();
   }
   if (MOCK) {
     console.log('Mock mode: serving sample data, Coinbase is not contacted.');

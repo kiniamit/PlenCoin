@@ -157,3 +157,58 @@ export function getMockOrders() {
     mock: true,
   };
 }
+
+/** Sample signals digest for MOCK=1. */
+export function getMockSignals() {
+  const inDays = (n) => new Date(Date.now() + n * 86400_000).toISOString();
+
+  return {
+    generatedAt: new Date().toISOString(),
+    durationMs: 1200,
+    nearDays: 45,
+    assetsScanned: ['BTC', 'ETH', 'LINK', 'SOL'],
+    orderIds: ['mock-1', 'mock-2'],
+    signals: [
+      {
+        key: 'SOL:mock-1:st-loss-expiring',
+        currency: 'SOL',
+        orderId: 'mock-1',
+        signal: 'st-loss-expiring',
+        step: 2,
+        size: 5,
+        limitPrice: 132,
+        notional: 660,
+        deadline: inDays(4),
+        gain: -184.2,
+        atStake: -122.4,
+        shortQty: 3.1,
+        longQty: 1.9,
+        avgAgeDays: 351,
+        aheadQty: 4,
+        aheadGain: -60.5,
+        aheadLongGain: -48.1,
+      },
+      {
+        key: 'ETH:mock-2:wait',
+        currency: 'ETH',
+        orderId: 'mock-2',
+        signal: 'wait',
+        step: 1,
+        size: 1,
+        limitPrice: 3600,
+        notional: 3600,
+        deadline: inDays(19),
+        gain: 742.5,
+        atStake: 742.5,
+        shortQty: 1,
+        longQty: 0,
+        avgAgeDays: 347,
+        aheadQty: 0,
+        aheadGain: 0,
+        aheadLongGain: 0,
+      },
+    ],
+    warnings: [],
+    mock: true,
+  };
+}

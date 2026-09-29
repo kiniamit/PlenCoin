@@ -546,3 +546,104 @@ body.centered {
   font-size: 14px;
   color: var(--down);
 }
+
+/* --- order value banding --- */
+
+/* Every tunable in one cluster, so settings are not scattered down the page. */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  /* Not a pill: it wraps to two lines on narrow screens. */
+  border-radius: 10px;
+  background: var(--surface);
+}
+.controls-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: -5px 2px;
+  background: var(--border);
+}
+
+.thresholds { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); }
+.thresholds label { display: inline-flex; align-items: center; gap: 5px; }
+.thresholds input {
+  font: inherit;
+  font-size: 12px;
+  width: 58px;
+  padding: 3px 6px;
+  text-align: right;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Only the value cell is banded - shading the whole row drowns the table.
+   The value column is second from last, with Running after it. */
+tbody tr.value-low td:nth-last-child(2) {
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+}
+tbody tr.value-high td:nth-last-child(2) {
+  color: var(--accent);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+/* Two order books side by side need more room than the single-column pages. */
+body.wide .topbar,
+body.wide main,
+body.wide footer { max-width: 1280px; }
+
+/* --- signals --- */
+
+td.deadline { font-weight: 600; white-space: nowrap; }
+td.deadline .sub { display: block; font-weight: 400; margin-top: 2px; }
+#signals td .sub { display: block; margin-top: 2px; }
+#signals th, #signals td { padding: 11px 10px; vertical-align: top; }
+
+/* Urgency reads down the left edge without shading whole rows. */
+tbody tr.tier-urgent td:first-child { box-shadow: inset 3px 0 0 var(--down); }
+tbody tr.tier-soon td:first-child { box-shadow: inset 3px 0 0 var(--c3); }
+tbody tr.tier-watch td:first-child { box-shadow: inset 3px 0 0 var(--border); }
+
+.nav-link.has-signals::after {
+  content: attr(data-count);
+  display: inline-block;
+  margin-left: 6px;
+  min-width: 16px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  border-radius: 999px;
+  background: var(--down);
+  color: #fff;
+}
+
+/* Header tooltips: the dotted underline is the only hint they exist. */
+th .has-tip { text-decoration-color: var(--text-muted); }
+
+/* --- tap-to-reveal tooltip --- */
+
+.tip-bubble {
+  position: absolute;
+  z-index: 50;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 9px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.16);
+}
+@media (prefers-color-scheme: dark) {
+  .tip-bubble { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); }
+}

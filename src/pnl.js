@@ -1,9 +1,10 @@
 const EPS = 1e-12;
 
 /**
- * Moves between the user's own wallets are not acquisitions or disposals.
- * Counting them would fabricate realized P/L and reset cost basis - which is
- * exactly what Coinbase's own per-position figures do when you stake.
+ * Moves between the user's own wallets are not acquisitions or disposals, so
+ * they realize nothing. They do relocate cost basis though: staking sends the
+ * dearest lots, which is what reproduces Coinbase's own per-position basis
+ * (0-1% across SOL, AVAX and ETH, where moving the cheapest is 13-70% out).
  */
 const INTERNAL_TYPES = new Set([
   'staking_transfer',
@@ -34,11 +35,19 @@ const INCOME_TYPES = new Set([
  */
 export function normaliseLedger(transactions) {
   return transactions
-    .filter((tx) => tx.status === 'completed' && !INTERNAL_TYPES.has(tx.type))
+    .filter((tx) => tx.status === 'completed')
     .map((tx) => {
       const qty = Number(tx.amount?.amount) || 0;
       const usd = Math.abs(Number(tx.native_amount?.amount) || 0);
-      return { time: tx.created_at, type: tx.type, qty, usd };
+      return {
+        time: tx.created_at,
+        type: tx.type,
+        qty,
+        usd,
+        // Which wallet it happened in, so staked coins stay unsellable.
+        staked: Boolean(tx.stakedWallet),
+        internal: INTERNAL_TYPES.has(tx.type),
+      };
     })
     .filter((entry) => Math.abs(entry.qty) > EPS)
     .sort((a, b) => new Date(a.time) - new Date(b.time));
@@ -53,17 +62,45 @@ export function normaliseLedger(transactions) {
  * by 17% and LIFO by 224%.
  */
 export function walkLedgerHifo(entries) {
-  const lots = [];
+  // Two pools: what you can sell, and what is locked in staking.
+  const pools = { spot: [], staked: [] };
   let realized = 0;
   let sendCount = 0;
   let sentQty = 0;
   let incomeQty = 0;
   let incomeValue = 0;
 
+  const dearestIndex = (lots) => {
+    let idx = 0;
+    for (let i = 1; i < lots.length; i += 1) {
+      if (lots[i].price > lots[idx].price) idx = i;
+    }
+    return idx;
+  };
+
   for (const entry of entries) {
+    const here = entry.staked ? pools.staked : pools.spot;
+
+    // A transfer between your own wallets: carry the lots across untouched.
+    // Only the receiving leg acts, or the pair would double-count.
+    if (entry.internal) {
+      if (entry.qty <= 0) continue;
+      const from = entry.staked ? pools.spot : pools.staked;
+      let left = entry.qty;
+      while (left > EPS && from.length > 0) {
+        const idx = dearestIndex(from);
+        const lot = from[idx];
+        const take = Math.min(left, lot.qty);
+        here.push({ qty: take, price: lot.price, acquiredAt: lot.acquiredAt });
+        lot.qty -= take;
+        left -= take;
+        if (lot.qty <= EPS) from.splice(idx, 1);
+      }
+      continue;
+    }
+
     if (entry.qty > 0) {
-      // The date rides along: holding period drives short vs long term tax.
-      lots.push({ qty: entry.qty, price: entry.usd / entry.qty, acquiredAt: entry.time });
+      here.push({ qty: entry.qty, price: entry.usd / entry.qty, acquiredAt: entry.time });
       if (INCOME_TYPES.has(entry.type)) {
         incomeQty += entry.qty;
         incomeValue += entry.usd;
@@ -79,31 +116,40 @@ export function walkLedgerHifo(entries) {
       sentQty += disposed;
     }
 
+    // A disposal can only draw from the wallet it happened in.
     let left = disposed;
-    while (left > EPS && lots.length > 0) {
-      let idx = 0;
-      for (let i = 1; i < lots.length; i += 1) {
-        if (lots[i].price > lots[idx].price) idx = i;
-      }
-      const lot = lots[idx];
+    while (left > EPS && here.length > 0) {
+      const idx = dearestIndex(here);
+      const lot = here[idx];
       const take = Math.min(left, lot.qty);
-      // A send removes the lot at cost - the coins moved, they were not sold.
       if (isSale) realized += take * (proceedsPerUnit - lot.price);
       lot.qty -= take;
       left -= take;
-      if (lot.qty <= EPS) lots.splice(idx, 1);
+      if (lot.qty <= EPS) here.splice(idx, 1);
     }
   }
 
-  const remainingQty = lots.reduce((sum, l) => sum + l.qty, 0);
-  const remainingBasis = lots.reduce((sum, l) => sum + l.qty * l.price, 0);
+  const summarise = (lots) => ({
+    qty: lots.reduce((sum, l) => sum + l.qty, 0),
+    basis: lots.reduce((sum, l) => sum + l.qty * l.price, 0),
+  });
+  const spot = summarise(pools.spot);
+  const staked = summarise(pools.staked);
+  const remainingQty = spot.qty + staked.qty;
+  const remainingBasis = spot.basis + staked.basis;
+  const byPrice = (a, b) => b.price - a.price;
 
   return {
     realized,
     remainingQty,
     remainingBasis,
-    // Dearest first, which is the order a HIFO sale consumes them in.
-    lots: lots.slice().sort((a, b) => b.price - a.price),
+    // Sellable lots only - the ladder cannot reach anything staked.
+    lots: pools.spot.slice().sort(byPrice),
+    stakedLots: pools.staked.slice().sort(byPrice),
+    spotQty: spot.qty,
+    spotBasis: spot.basis,
+    stakedQty: staked.qty,
+    stakedBasis: staked.basis,
     avgEntry: remainingQty > EPS ? remainingBasis / remainingQty : 0,
     sendCount,
     sentQty,
@@ -370,7 +416,10 @@ export function classifyLadderTax({ lots, orders, asOf = new Date(), feeRate = 0
       newestAgeDays: newestAge,
       daysToLongTerm,
       daysToFirstLongTerm,
+      // Absolute dates, so a stored signal still counts down correctly days
+      // later instead of freezing at the number it was computed with.
       longTermOn: crossover ? crossover.toISOString() : null,
+      firstLongTermOn: firstCrossover ? firstCrossover.toISOString() : null,
       signal,
     };
   });

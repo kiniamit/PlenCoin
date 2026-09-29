@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Signals — PlenCoin</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>◎</text></svg>" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <a class="back" href="/">← Portfolio</a>
+        <h1>Signals</h1>
+        <span class="badge" id="mode-badge" hidden>mock data</span>
+      </div>
+      <div class="topbar-actions">
+        <a class="nav-link" href="/orders.html">Upcoming orders</a>
+        <span class="updated" id="updated"></span>
+        <button type="button" id="rescan" class="button">Rescan</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary" aria-label="Signal summary">
+        <div class="stat">
+          <span class="label">Urgent</span>
+          <span class="value" id="count-urgent">—</span>
+          <span class="note">7 days or less</span>
+        </div>
+        <div class="stat">
+          <span class="label">Soon</span>
+          <span class="value" id="count-soon">—</span>
+          <span class="note">8 to 30 days</span>
+        </div>
+        <div class="stat">
+          <span class="label">Watch</span>
+          <span class="value" id="count-watch">—</span>
+          <span class="note">31 days out</span>
+        </div>
+        <div class="stat">
+          <span class="label">Next deadline</span>
+          <span class="value" id="next-deadline">—</span>
+          <span class="note" id="next-note"></span>
+        </div>
+      </section>
+
+      <div id="banner" class="banner" hidden></div>
+
+      <p class="explainer">
+        Orders whose tax treatment changes on a date. A <strong>hold</strong> is a short-term gain
+        that turns long-term if you wait; a <strong>sell by</strong> is a short-term loss that stops
+        being short-term if you do. Holding period does not depend on price, so these only move as
+        days pass or orders change.
+      </p>
+
+      <section class="panel" aria-label="Signals">
+        <div class="table-wrap">
+          <table id="signals">
+            <thead>
+              <tr>
+                <th scope="col">Deadline</th>
+                <th scope="col">Asset</th>
+                <th scope="col"><span class="has-tip" title="What the deadline means for this order. &quot;sell by&quot; is a short-term loss that becomes long-term after the date, so booking it earlier keeps the short-term treatment. &quot;hold&quot; is a short-term gain that becomes long-term after the date, so waiting improves it.">Action</span></th>
+                <th scope="col" class="num">Order</th>
+                <th scope="col" class="num">Books</th>
+                <th scope="col" class="num"><span class="has-tip" title="The short-term slice of what this order books - the only part whose tax treatment changes on the deadline. Anything already past a year is unaffected, whatever you do.">At stake</span></th>
+                <th scope="col"><span class="has-tip" title="HIFO sells your most expensive coins first, so every order below this one fills before it. This is how much you would have to sell to get here, what it books, and how much of that is long-term loss you would be spending to protect the amount at stake.">To reach it</span></th>
+              </tr>
+            </thead>
+            <tbody id="signals-body">
+              <tr class="empty"><td colspan="7">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Holding periods follow the US rule: long-term after more than one year. Not tax advice.
+    </footer>
+
+    <script type="module" src="/signals.js"></script>
+    <script type="module" src="/tooltip.js"></script>
+  </body>
+</html>

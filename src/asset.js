@@ -31,7 +31,12 @@ async function fetchAssetLedger(currency) {
 
   const transactions = [];
   for (const account of accounts) {
-    transactions.push(...(await fetchV2Transactions(account.id)));
+    // Tag the wallet: staked coins cannot be sold, so their lots are kept
+    // in a separate pool the sell ladder never draws from.
+    const stakedWallet = /stake/i.test(account.name ?? '');
+    for (const tx of await fetchV2Transactions(account.id)) {
+      transactions.push({ ...tx, stakedWallet });
+    }
   }
 
   return { transactions, walletCount: accounts.length };
@@ -120,18 +125,28 @@ export async function getAssetDetail(symbol) {
   const sellOrders = extractSellOrders(openOrders);
   const buyOrderCount = openOrders.filter((o) => o.side === 'BUY').length;
 
+  const laddered = sellOrders.reduce((sum, o) => sum + o.size, 0);
+  if (entries.length > 0 && laddered > walk.spotQty + 1e-8) {
+    warnings.push(
+      `Sell orders total ${laddered.toFixed(8)} ${currency} but only ${walk.spotQty.toFixed(8)} is ` +
+        'unstaked and sellable. The rungs past that point have no cost basis to draw on.',
+    );
+  }
+
   // Lots go to the browser so what-if rows get the same tax treatment as real
   // orders. Counts are small - tens, not thousands.
   const now = new Date();
-  const lots = walk.remainingQty > 0
-    ? walk.lots.map((lot) => ({
-        qty: lot.qty,
-        price: lot.price,
-        acquiredAt: lot.acquiredAt,
-        longTermOn: longTermFrom(lot.acquiredAt).toISOString(),
-      }))
-    : [];
-  const longTermQty = lots.reduce((sum, l) => sum + (now >= new Date(l.longTermOn) ? l.qty : 0), 0);
+  const decorate = (lot) => ({
+    qty: lot.qty,
+    price: lot.price,
+    acquiredAt: lot.acquiredAt,
+    longTermOn: longTermFrom(lot.acquiredAt).toISOString(),
+  });
+  // Only sellable lots go to the ladder; staked ones are reported separately.
+  const lots = walk.lots.map(decorate);
+  const stakedLots = walk.stakedLots.map(decorate);
+  const isLong = (l) => now >= new Date(l.longTermOn);
+  const longTermQty = [...lots, ...stakedLots].reduce((sum, l) => sum + (isLong(l) ? l.qty : 0), 0);
 
   return {
     generatedAt: new Date().toISOString(),
@@ -164,6 +179,12 @@ export async function getAssetDetail(symbol) {
 
     lots,
     lotCount: lots.length,
+    stakedLotCount: stakedLots.length,
+    // What the ladder can actually draw on, versus what is locked away.
+    sellableQty: walk.spotQty,
+    sellableBasis: walk.spotBasis,
+    stakedQty: walk.stakedQty,
+    stakedBasis: walk.stakedBasis,
     longTermQty,
     longTermShare: heldQty > 0 ? longTermQty / heldQty : 0,
 

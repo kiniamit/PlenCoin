@@ -5,6 +5,12 @@ const state = { data: null, loading: false, coin: ALL_COINS };
 const AUTO_REFRESH_KEY = 'plencoin.orders.autoRefresh';
 const INTERVAL_KEY = 'plencoin.orders.refreshSeconds';
 const DEFAULT_SECONDS = 15;
+const LOW_KEY = 'plencoin.orders.lowValue';
+const HIGH_KEY = 'plencoin.orders.highValue';
+const DEFAULT_LOW = 290;
+const DEFAULT_HIGH = 450;
+let lowValue = DEFAULT_LOW;
+let highValue = DEFAULT_HIGH;
 const MIN_SECONDS = 5;
 const MAX_SECONDS = 600;
 const STEP_SECONDS = 5;
@@ -100,6 +106,10 @@ function renderBook(rows, bodyId, summaryId, emptyText) {
   for (const [index, row] of rows.entries()) {
     const tr = document.createElement('tr');
     running += row.notional;
+
+    // Size banding, so unusually small or large orders stand out when scanning.
+    if (row.notional < lowValue) tr.classList.add('value-low');
+    else if (row.notional > highValue) tr.classList.add('value-high');
 
     const asset = document.createElement('td');
     const link = document.createElement('a');
@@ -263,6 +273,16 @@ function recall(key) {
   }
 }
 
+function setThresholds(low, high) {
+  lowValue = Number.isFinite(low) && low >= 0 ? low : DEFAULT_LOW;
+  highValue = Number.isFinite(high) && high >= 0 ? high : DEFAULT_HIGH;
+  el('low-threshold').value = String(lowValue);
+  el('high-threshold').value = String(highValue);
+  remember(LOW_KEY, String(lowValue));
+  remember(HIGH_KEY, String(highValue));
+  if (state.data) render();
+}
+
 function clampSeconds(value) {
   if (!Number.isFinite(value)) return DEFAULT_SECONDS;
   return Math.min(MAX_SECONDS, Math.max(MIN_SECONDS, Math.round(value)));
@@ -297,10 +317,19 @@ function initialAutoRefresh() {
 el('refresh').addEventListener('click', () => load({ refresh: true }));
 el('auto-refresh').addEventListener('change', (event) => setAutoRefresh(event.target.checked));
 
+el('low-threshold').addEventListener('change', () =>
+  setThresholds(Number.parseFloat(el('low-threshold').value), highValue));
+el('high-threshold').addEventListener('change', () =>
+  setThresholds(lowValue, Number.parseFloat(el('high-threshold').value)));
+
 el('interval').addEventListener('change', (event) => setRefreshSeconds(Number.parseInt(event.target.value, 10)));
 el('interval-down').addEventListener('click', () => setRefreshSeconds(refreshSeconds - STEP_SECONDS));
 el('interval-up').addEventListener('click', () => setRefreshSeconds(refreshSeconds + STEP_SECONDS));
 
+setThresholds(
+  Number.parseFloat(recall(LOW_KEY) ?? '') || DEFAULT_LOW,
+  Number.parseFloat(recall(HIGH_KEY) ?? '') || DEFAULT_HIGH,
+);
 setRefreshSeconds(Number.parseInt(recall(INTERVAL_KEY) ?? '', 10) || DEFAULT_SECONDS);
 setAutoRefresh(initialAutoRefresh());
 load();
