@@ -74,6 +74,11 @@ Either way the server listens on the Windows side, so open
 
 ## Features
 
+[docs/product.md](docs/product.md) describes these in plain language — use it
+for demos, videos and anything user-facing. The per-feature docs below are
+engineering notes.
+
+
 | Page | What it does |
 | --- | --- |
 | `/` | Portfolio dashboard — total value, 24h change, sortable holdings, allocation. Staked funds included. |
